@@ -6,7 +6,7 @@ const data = readFileSync(join(__dirname, 'input.txt'), {
   flag: 'r',
 });
 
-const items: string[] = data.split(/\r?\n/);
+const items: string[] = data.split(/\n/);
 
 let total = 0;
 const totals: number[] = [];

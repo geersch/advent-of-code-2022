@@ -91,7 +91,7 @@ const data = readFileSync(join(__dirname, 'input.txt'), {
   flag: 'r',
 });
 
-const items: string[] = data.split(/\r?\n/);
+const items: string[] = data.split(/\n/);
 
 console.log(`Score 1st round: ${calculateScore(items, NoopStrategy)}.`);
 console.log(`Score 2nd round: ${calculateScore(items, AlterChoiceStrategy)}.`);
