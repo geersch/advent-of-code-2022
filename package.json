@@ -5,7 +5,8 @@
   "scripts": {
     "day1": "wireit",
     "day2": "wireit",
-    "day3": "wireit"
+    "day3": "wireit",
+    "day4": "wireit"
   },
   "wireit": {
     "day1": {
@@ -19,6 +20,10 @@
     "day3": {
       "command": "ts-node ./src/day3",
       "files": ["src/day3/*", "tsconfig.json"]
+    },
+    "day4": {
+      "command": "ts-node ./src/day4",
+      "files": ["src/day4/*", "tsconfig.json"]
     }
   },
   "author": "Christophe Geers",
