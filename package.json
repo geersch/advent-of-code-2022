@@ -13,7 +13,8 @@
     "day8": "wireit",
     "day9": "wireit",
     "day10": "wireit",
-    "day11": "wireit"
+    "day11": "wireit",
+    "day12": "wireit"
   },
   "wireit": {
     "day1": {
@@ -90,6 +91,13 @@
       "command": "ts-node ./src/day11",
       "files": [
         "src/day11/*",
+        "tsconfig.json"
+      ]
+    },
+    "day12": {
+      "command": "ts-node ./src/day12",
+      "files": [
+        "src/day12/*",
         "tsconfig.json"
       ]
     }
