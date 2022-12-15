@@ -2,93 +2,80 @@ import { readFileSync } from 'fs';
 import { cloneDeep } from 'lodash';
 import { join } from 'path';
 
-type Point = { x: number; y: number; type: 'Rock' | 'Sand' | 'Floor' };
+type Point = { x: number; y: number; type: 'Air' | 'Rock' | 'Sand' };
 
-const paths: Point[][] = readFileSync(join(__dirname, 'input.txt'), 'utf8')
+const paths = readFileSync(join(__dirname, 'input.txt'), 'utf8')
   .split(/\n/)
-  .map((line) => {
-    return line.split('->').map((point) => {
-      const { 0: x, 1: y } = point.trim().split(',').map(Number);
-      return { x, y, type: 'Rock' };
-    });
-  });
+  .map((line) => line.split(' -> ').map((point) => point.split(',').map(Number)));
+
+const width = Math.max(...paths.map((p) => p.map((p) => p[0])).flat());
+const height = Math.max(...paths.map((p) => p.map((p) => p[1])).flat());
+
+const rocks: Point[] = [];
+for (const path of paths) {
+  for (let i = 1; i < path.length; i++) {
+    const [x1, y1, x2, y2] = [...path[i - 1], ...path[i]];
+    if (x1 === x2) {
+      for (let row = Math.min(y1, y2); row <= Math.max(y1, y2); row++) {
+        rocks.push({ x: x1, y: row, type: 'Rock' });
+      }
+    } else if (y1 === y2) {
+      for (let col = Math.min(x1, x2); col <= Math.max(x1, x2); col++) {
+        rocks.push({ x: col, y: y1, type: 'Rock' });
+      }
+    }
+  }
+}
 
 const cave: Point[][] = [];
-for (let i = 0; i < paths.length; i++) {
-  let rock = paths[i];
-  let point = rock.shift();
-  while (point) {
-    const nextPoint = rock.shift();
-    if (!nextPoint) {
-      break;
-    }
-    let { x, y } = point;
-    if (nextPoint.y - point.y !== 0) {
-      for (let row = Math.min(point.y, nextPoint.y); row <= Math.max(point.y, nextPoint.y); row++) {
-        if (!cave[row]) {
-          cave[row] = [];
-        }
-        cave[row].push({ x, y: row, type: 'Rock' });
-      }
-    } else if (nextPoint.x - point.x !== 0) {
-      for (let column = Math.min(nextPoint.x, point.x); column <= Math.max(nextPoint.x, point.x); column++) {
-        if (!cave[y]) {
-          cave[y] = [];
-        }
-        cave[y].push({ x: column, y, type: 'Rock' });
-      }
-    }
-    point = nextPoint;
+for (let row = 0; row <= height; row++) {
+  cave[row] = [];
+  for (let col = 0; col <= width * 2; col++) {
+    cave[row].push({ x: col, y: row, type: 'Air' });
   }
 }
+rocks.forEach(({ x, y }) => (cave[y][x].type = 'Rock'));
 
-function spawnSand(cave: Point[][], origin: Point): Point {
-  const { x, y } = origin;
-  const directlyBelow = cave[y + 1]?.find((e) => e.x === x);
-  if (!directlyBelow) {
-    return spawnSand(cave, { x, y: y + 1, type: 'Sand' });
+function spawnSand(cave: Point[][], x: number, y: number): Point | undefined {
+  if (!cave[y + 1]) {
+    return undefined;
   }
-  const toTheLeft = cave[y + 1]?.find((e) => e.x === x - 1);
-  if (!toTheLeft) {
-    return spawnSand(cave, { x: x - 1, y: y + 1, type: 'Sand' });
+  if (cave[y + 1][x].type === 'Air') {
+    return spawnSand(cave, x, y + 1);
   }
-  const toTheRight = cave[y + 1]?.find((e) => e.x === x + 1);
-  if (!toTheRight) {
-    return spawnSand(cave, { x: x + 1, y: y + 1, type: 'Sand' });
+  if (cave[y + 1][x - 1].type === 'Air') {
+    return spawnSand(cave, x - 1, y + 1);
   }
-  if (directlyBelow && directlyBelow.type === 'Floor') {
-    return { x: origin.x, y: origin.y, type: 'Floor' };
+  if (cave[y + 1][x + 1].type === 'Air') {
+    return spawnSand(cave, x + 1, y + 1);
   }
-  return origin;
+  return cave[y][x];
 }
 
-function pourSand(cave: Point[][], fillUp: boolean): number {
-  const maxDepth = cave.length;
-  const maxWidth = cave.reduce((acc, row) => {
-    const maxWidth = row.reduce((acc, curr) => (curr.x > acc ? curr.x : acc), 0);
-    return maxWidth > acc ? maxWidth : acc;
-  }, 0);
+function pourSand(cave: Point[][], addFloor: boolean): number {
   const clone = cloneDeep(cave);
-  clone[maxDepth + 1] = [];
-  for (let i = 0; i < maxWidth * 2; i++) {
-    clone[maxDepth + 1].push({ x: i, y: maxDepth + 1, type: 'Floor' });
+  if (addFloor) {
+    clone.push([]);
+    for (let col = 0; col < clone[0].length; col++) {
+      clone[clone.length - 1].push({ x: col, y: clone.length - 1, type: 'Air' });
+    }
+    clone.push([]);
+    for (let col = 0; col < clone[0].length; col++) {
+      clone[clone.length - 1].push({ x: col, y: clone.length - 1, type: 'Rock' });
+    }
   }
   let stopPouring = false;
   let iteration = 0;
   while (!stopPouring) {
-    iteration += 1;
-    const { x, y, type } = spawnSand(clone, { x: 500, y: 0, type: 'Sand' });
-    stopPouring = (fillUp && x === 500 && y === 0) || (!fillUp && type === 'Floor');
-    if (!fillUp && stopPouring) {
+    const point: Point | undefined = spawnSand(clone, 500, 0);
+    iteration += point ? 1 : 0;
+    if (!point || (point.x === 500 && point.y === 0)) {
       break;
     }
-    if (!clone[y]) {
-      clone[y] = [];
-    }
-    clone[y].push({ x, y, type: 'Sand' });
+    clone[point.y][point.x].type = 'Sand';
   }
   return iteration;
 }
 
-console.log(`${pourSand(cave, false) - 1} sand units come to rest before they start flowing into the abyss.`);
+console.log(`${pourSand(cave, false)} sand units come to rest before they start flowing into the abyss.`);
 console.log(`${pourSand(cave, true)} units of sand fall until the source becomes blocked.`);
