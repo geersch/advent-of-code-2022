@@ -1,5 +1,4 @@
 import { readFileSync } from 'fs';
-import { filter } from 'lodash';
 import { join } from 'path';
 
 type Point = { x: number; y: number; height: number; elevation: string };
