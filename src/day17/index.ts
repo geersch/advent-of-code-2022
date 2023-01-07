@@ -41,12 +41,16 @@ function calcTowerMask(tower: number[], height: number): number {
   return mask;
 }
 
+function getPeak(tower: number[], count: number): number {
+  let result = 0;
+  for (let i = tower.length - 1; i >= tower.length - count; i--) {
+    result += tower[i];
+  }
+  return result;
+}
+
 function solve(numberOfRocks: number): { height: number; pattern?: { rocks: number; height: number } } {
-  const seen = new Map<string, { key: string; count: number }>();
-
-  let previous = 0;
-  let rounds = 0;
-
+  const seen = new Map<string, { count: number; height: number; rocks: number }>();
   const tower: number[] = [];
   let jetIndex = 0;
   let rockIndex = 0;
@@ -64,15 +68,6 @@ function solve(numberOfRocks: number): { height: number; pattern?: { rocks: numb
       jetIndex += 1;
       if (jetIndex % jets.length === 0) {
         jetIndex = 0;
-        const key = `${tower.length - previous}_${i - rounds}`;
-        rounds = i;
-        previous = tower.length;
-        const value = seen.get(key);
-        if (!value) {
-          seen.set(key, { key, count: 1 });
-        } else {
-          value.count += 1;
-        }
       }
 
       let newPosition = rock;
@@ -101,14 +96,24 @@ function solve(numberOfRocks: number): { height: number; pattern?: { rocks: numb
         height -= 1;
       }
     }
+
+    if (tower.length >= 100) {
+      let shape: number = getPeak(tower, 100);
+      const key = `${rockIndex}_${jetIndex}_${shape}`;
+      const value = seen.get(key);
+      if (!value) {
+        seen.set(key, { count: 1, height: tower.length, rocks: i });
+      } else {
+        value.count += 1;
+        value.height = tower.length - value.height;
+        value.rocks = i - value.rocks;
+      }
+    }
   }
 
   if (seen.size > 0) {
-    const parts = [...seen.values()]
-      .sort((a, b) => b.count - a.count)[0]
-      .key.split('_')
-      .map(Number);
-    return { height: tower.length, pattern: { rocks: parts[1], height: parts[0] } };
+    const parts = [...seen.values()].sort((a, b) => b.count - a.count)[0];
+    return { height: tower.length, pattern: { rocks: parts.rocks, height: parts.height } };
   } else {
     return { height: tower.length };
   }
