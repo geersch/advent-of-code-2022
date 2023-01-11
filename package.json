@@ -24,6 +24,7 @@
     "day19": "wireit",
     "day20": "wireit",
     "day21": "wireit",
+    "day22": "wireit",
     "day23": "wireit",
     "day24": "wireit",
     "day25": "wireit"
@@ -173,6 +174,13 @@
       "command": "ts-node ./src/day21",
       "files": [
         "src/day21/*",
+        "tsconfig.json"
+      ]
+    },
+    "day22": {
+      "command": "ts-node ./src/day22",
+      "files": [
+        "src/day22/*",
         "tsconfig.json"
       ]
     },
